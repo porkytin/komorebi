@@ -27,6 +27,9 @@ Options:
       --clean-state
           Do not attempt to auto-apply a dumped state temp file from a previously running instance of komorebi
 
+      --no-version-check
+          Do not check GitHub for a newer version of komorebi during startup
+
   -h, --help
           Print help
 

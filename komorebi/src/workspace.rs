@@ -783,13 +783,11 @@ impl Workspace {
                     let containers = self.containers_mut();
 
                     for (i, container) in containers.iter_mut().enumerate() {
-                        let window_count = container.windows().len();
-
                         if let Some(layout) = layouts.get_mut(i) {
                             layout.add_padding(border_offset);
                             layout.add_padding(border_width);
 
-                            if stackbar_manager::should_have_stackbar(window_count) {
+                            if stackbar_manager::should_have_stackbar(container) {
                                 let tab_height = STACKBAR_TAB_HEIGHT.load(Ordering::SeqCst);
                                 let total_height = tab_height + container_padding;
 
@@ -1339,8 +1337,6 @@ impl Workspace {
 
         self.new_container_for_window(window);
 
-        let mut container = Container::default();
-        container.add_window(window);
         Ok(())
     }
 
@@ -2060,7 +2056,7 @@ impl Workspace {
                     } else {
                         WindowKind::Unfocused
                     }
-                } else if container.windows().len() > 1 {
+                } else if container.is_group() {
                     WindowKind::Stack
                 } else {
                     WindowKind::Single
