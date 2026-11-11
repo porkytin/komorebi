@@ -838,6 +838,9 @@ struct Start {
     /// Do not attempt to auto-apply a dumped state temp file from a previously running instance of komorebi
     #[clap(long)]
     clean_state: bool,
+    /// Do not check GitHub for a newer version of komorebi during startup
+    #[clap(long)]
+    no_version_check: bool,
 }
 
 #[derive(Parser)]
@@ -2715,28 +2718,30 @@ if (!(Get-Process masir -ErrorAction SilentlyContinue))
                 println!("{stdout}");
             }
 
-            let client = reqwest::blocking::Client::new();
+            if !args.no_version_check {
+                let client = reqwest::blocking::Client::new();
 
-            if let Ok(response) = client
-                .get("https://api.github.com/repos/LGUG2Z/komorebi/releases/latest")
-                .header("User-Agent", "komorebic-version-checker")
-                .send()
-            {
-                let version = env!("CARGO_PKG_VERSION");
-
-                #[derive(Deserialize)]
-                struct Release {
-                    tag_name: String,
-                }
-
-                if let Ok(release) =
-                    serde_json::from_str::<Release>(&response.text().unwrap_or_default())
+                if let Ok(response) = client
+                    .get("https://api.github.com/repos/LGUG2Z/komorebi/releases/latest")
+                    .header("User-Agent", "komorebic-version-checker")
+                    .send()
                 {
-                    let trimmed = release.tag_name.trim_start_matches("v");
-                    if trimmed > version {
-                        println!(
-                            "An updated version of komorebi is available! https://github.com/LGUG2Z/komorebi/releases/v{trimmed}"
-                        );
+                    let version = env!("CARGO_PKG_VERSION");
+
+                    #[derive(Deserialize)]
+                    struct Release {
+                        tag_name: String,
+                    }
+
+                    if let Ok(release) =
+                        serde_json::from_str::<Release>(&response.text().unwrap_or_default())
+                    {
+                        let trimmed = release.tag_name.trim_start_matches("v");
+                        if trimmed > version {
+                            println!(
+                                "An updated version of komorebi is available! https://github.com/LGUG2Z/komorebi/releases/v{trimmed}"
+                            );
+                        }
                     }
                 }
             }
