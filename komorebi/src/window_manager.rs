@@ -3049,7 +3049,12 @@ impl WindowManager {
         let workspace = self.focused_workspace_mut()?;
 
         workspace.new_container_for_focused_window()?;
-        self.update_focused_workspace(self.mouse_follows_focus, false)
+        // the window that was removed is the focused window of the container
+        // that was made for it, so it is focused here: the window that is left
+        // in the stack was restored and activated while the focused window of
+        // the stack was being loaded, and it is not to end up over the one that
+        // was just removed
+        self.update_focused_workspace(self.mouse_follows_focus, true)
     }
 
     /// Toggles the stack state of the focused container, mimicking Hyprland's
@@ -3140,7 +3145,14 @@ impl WindowManager {
                 container.grouped = false;
             }
 
-            self.move_container_in_direction(direction)?;
+            // the window has already left the stack, so the workspace has to be
+            // laid out again even if the move itself does not happen, as when
+            // there is nothing in the requested direction to move it to
+            if let Err(error) = self.move_container_in_direction(direction) {
+                tracing::warn!("could not move the window after unstacking: {error}");
+            }
+
+            self.update_focused_workspace(self.mouse_follows_focus, true)?;
         } else if target_is_stack {
             // the focused window is not in a stack, but there is one in the
             // requested direction; move into it

@@ -62,10 +62,13 @@ pub fn send_notification() {
     }
 }
 
-pub fn should_have_stackbar(window_count: usize) -> bool {
+/// Whether a stackbar should be reserved and drawn for a container. This has to
+/// agree with the check that draws the bars in `handle_notifications`: a stack
+/// is also a container that is marked as grouped with only one window in it.
+pub fn should_have_stackbar(container: &Container) -> bool {
     match STACKBAR_MODE.load() {
         StackbarMode::Always => true,
-        StackbarMode::OnStack => window_count > 1,
+        StackbarMode::OnStack => container.is_group(),
         StackbarMode::Never => false,
     }
 }
